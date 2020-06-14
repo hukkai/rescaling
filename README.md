@@ -5,4 +5,6 @@ This is the official implementation for our paper
 >
 > Hu Kai, Jie Shao, Changhu Wang, Xiangyang Xue, Bhiksha Raj
 
-I am on vacation now. Codes are coming soon.
+Due to the time limit, we provide codes for ImageNet classification experiments by the deadline. See [training.md](https://github.com/neurips2020codes/RescaleNet/blob/master/training.md) for details.
+
+I am on vacation now. Codes for more experiments are coming soon.
