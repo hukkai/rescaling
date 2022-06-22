@@ -2,8 +2,13 @@ import math
 
 
 class warmup_scheduler(object):
-    def __init__(self, base_lr, iter_per_epoch, max_epoch, 
-                 multi_step=[30, 60, 90], gamma=.1, warmup_epoch=5):
+    def __init__(self,
+                 base_lr,
+                 iter_per_epoch,
+                 max_epoch,
+                 multi_step=[30, 60, 90],
+                 gamma=.1,
+                 warmup_epoch=5):
         super(warmup_scheduler, self).__init__()
 
         self.base_lr = base_lr
@@ -24,9 +29,10 @@ class warmup_scheduler(object):
         if self.current_iter < self.warmup_iters:
             lr_ratio = self.current_iter / self.warmup_iters
         else:
-            num_epochs = (self.current_iter - self.warmup_iters) / self.iter_per_epoch
-            stage = sum([num_epochs>k for k in self.multi_step])
-            lr_ratio = self.gamma ** stage
+            num_epochs = (self.current_iter -
+                          self.warmup_iters) / self.iter_per_epoch
+            stage = sum([num_epochs > k for k in self.multi_step])
+            lr_ratio = self.gamma**stage
         self.current_iter += 1
         return lr_ratio
 
@@ -34,7 +40,8 @@ class warmup_scheduler(object):
         if self.current_iter < self.warmup_iters:
             lr_ratio = self.current_iter / self.warmup_iters
         else:
-            process = (self.current_iter - self.warmup_iters) / self.cosine_iters
+            process = (self.current_iter -
+                       self.warmup_iters) / self.cosine_iters
             lr_ratio = .5 * (1 + math.cos(process * math.pi))
             lr_ratio = max(lr_ratio, 1e-5)
         self.current_iter += 1
