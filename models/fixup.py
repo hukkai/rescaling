@@ -1,23 +1,39 @@
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
+
 
 def conv3x3(in_planes, out_planes, stride=1):
-    """3x3 convolution with padding"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-                     padding=1, bias=False)
+    """3x3 convolution with padding."""
+    return nn.Conv2d(in_planes,
+                     out_planes,
+                     kernel_size=3,
+                     stride=stride,
+                     padding=1,
+                     bias=False)
 
 
 def conv1x1(in_planes, out_planes, stride=1):
-    """1x1 convolution"""
-    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+    """1x1 convolution."""
+    return nn.Conv2d(in_planes,
+                     out_planes,
+                     kernel_size=1,
+                     stride=stride,
+                     bias=False)
+
 
 class FixupBottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, inplanes, planes, stride=1, downsample=None, drop_conv=0.0):
+    def __init__(self,
+                 inplanes,
+                 planes,
+                 stride=1,
+                 downsample=None,
+                 drop_conv=0.0):
         super(FixupBottleneck, self).__init__()
-        # Both self.conv2 and self.downsample layers downsample the input when stride != 1
+        # Both self.conv2 and self.downsample layers
+        # downsample the input when stride != 1
         self.bias1a = nn.Parameter(torch.zeros(1))
         self.conv1 = conv1x1(inplanes, planes)
         self.bias1b = nn.Parameter(torch.zeros(1))
@@ -61,13 +77,21 @@ class FixupBottleneck(nn.Module):
 
 
 class FixupResNet(nn.Module):
-
-    def __init__(self, block, layers, num_classes=1000, drop_conv=0.0, drop_fc=0.0):
+    def __init__(self,
+                 block,
+                 layers,
+                 num_classes=1000,
+                 drop_conv=0.0,
+                 drop_fc=0.0):
         super(FixupResNet, self).__init__()
         self.num_layers = sum(layers)
         self.inplanes = 64
         self.drop_conv = drop_conv
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
+        self.conv1 = nn.Conv2d(3,
+                               64,
+                               kernel_size=7,
+                               stride=2,
+                               padding=3,
                                bias=False)
         self.bias1 = nn.Parameter(torch.zeros(1))
         self.relu = nn.ReLU(inplace=True)
@@ -83,11 +107,26 @@ class FixupResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, FixupBottleneck):
-                nn.init.normal_(m.conv1.weight, mean=0, std=np.sqrt(2 / (m.conv1.weight.shape[0] * np.prod(m.conv1.weight.shape[2:]))) * self.num_layers ** (-0.25))
-                nn.init.normal_(m.conv2.weight, mean=0, std=np.sqrt(2 / (m.conv2.weight.shape[0] * np.prod(m.conv2.weight.shape[2:]))) * self.num_layers ** (-0.25))
+                nn.init.normal_(
+                    m.conv1.weight,
+                    mean=0,
+                    std=np.sqrt(2 / (m.conv1.weight.shape[0] *
+                                     np.prod(m.conv1.weight.shape[2:]))) *
+                    self.num_layers**(-0.25))
+                nn.init.normal_(
+                    m.conv2.weight,
+                    mean=0,
+                    std=np.sqrt(2 / (m.conv2.weight.shape[0] *
+                                     np.prod(m.conv2.weight.shape[2:]))) *
+                    self.num_layers**(-0.25))
                 nn.init.constant_(m.conv3.weight, 0)
                 if m.downsample is not None:
-                    nn.init.normal_(m.downsample.weight, mean=0, std=np.sqrt(2 / (m.downsample.weight.shape[0] * np.prod(m.downsample.weight.shape[2:]))))
+                    nn.init.normal_(
+                        m.downsample.weight,
+                        mean=0,
+                        std=np.sqrt(2 /
+                                    (m.downsample.weight.shape[0] *
+                                     np.prod(m.downsample.weight.shape[2:]))))
             elif isinstance(m, nn.Linear):
                 nn.init.constant_(m.weight, 0)
                 nn.init.constant_(m.bias, 0)
@@ -95,13 +134,20 @@ class FixupResNet(nn.Module):
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
-            downsample = conv1x1(self.inplanes, planes * block.expansion, stride)
+            downsample = conv1x1(self.inplanes, planes * block.expansion,
+                                 stride)
 
         layers = []
-        layers.append(block(self.inplanes, planes, stride, downsample, drop_conv=self.drop_conv))
+        layers.append(
+            block(self.inplanes,
+                  planes,
+                  stride,
+                  downsample,
+                  drop_conv=self.drop_conv))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
-            layers.append(block(self.inplanes, planes, drop_conv=self.drop_conv))
+            layers.append(
+                block(self.inplanes, planes, drop_conv=self.drop_conv))
 
         return nn.Sequential(*layers)
 
@@ -122,15 +168,20 @@ class FixupResNet(nn.Module):
 
         return x
 
+
 def fixup50(num_classes=1000, drop_conv=0.0, drop_fc=0.0):
-    """Constructs a Fixup-ResNet-50 model.
-    """
-    model = FixupResNet(FixupBottleneck, [3, 4, 6, 3], num_classes, drop_conv=drop_conv, drop_fc=drop_fc)
+    """Constructs a Fixup-ResNet-50 model."""
+    model = FixupResNet(FixupBottleneck, [3, 4, 6, 3],
+                        num_classes,
+                        drop_conv=drop_conv,
+                        drop_fc=drop_fc)
     return model
 
 
 def fixup101(num_classes=1000, drop_conv=0.0, drop_fc=0.0):
-    """Constructs a Fixup-ResNet-101 model.
-    """
-    model = FixupResNet(FixupBottleneck, [3, 4, 23, 3], num_classes, drop_conv=drop_conv, drop_fc=drop_fc)
+    """Constructs a Fixup-ResNet-101 model."""
+    model = FixupResNet(FixupBottleneck, [3, 4, 23, 3],
+                        num_classes,
+                        drop_conv=drop_conv,
+                        drop_fc=drop_fc)
     return model

@@ -1,4 +1,7 @@
-import torch, time
+import time
+
+import torch
+
 
 def train(net, trainloader, criterion, optimizer, mean_and_std, scheduler):
     net.train()
@@ -6,11 +9,12 @@ def train(net, trainloader, criterion, optimizer, mean_and_std, scheduler):
     mean, stddev = mean_and_std
 
     max_iter = len(trainloader)
-    logging_time = max(max_iter//10, 1)
-    
+    logging_time = max(max_iter // 10, 1)
+
     start = time.time()
     for batch_idx, (inputs, targets) in enumerate(trainloader):
-        inputs, targets = inputs.cuda(non_blocking=True), targets.cuda(non_blocking=True)
+        inputs, targets = inputs.cuda(non_blocking=True), targets.cuda(
+            non_blocking=True)
         inputs = inputs.float().sub_(mean).div_(stddev)
 
         optimizer.zero_grad()
@@ -29,11 +33,15 @@ def train(net, trainloader, criterion, optimizer, mean_and_std, scheduler):
         correct += predicted.eq(targets).sum().item()
 
         if (batch_idx + 1) % logging_time == logging_time - 1:
-            time_left = (time.time() - start) / (batch_idx + 1) * (max_iter - batch_idx - 1)
-            print('Train loss: %.3f, acc: %.3f%%, learning rate: %.4f, time left %.3f mins.'%(
-                   train_loss/(batch_idx+1), 100.*correct/total, lr, time_left/60.0))
+            time_left = (time.time() -
+                         start) / (batch_idx + 1) * (max_iter - batch_idx - 1)
+            print('Train loss: %.3f, acc: %.3f%%,'
+                  ' learning rate: %.4f, time left %.3f mins.' %
+                  (train_loss / (batch_idx + 1), 100. * correct / total, lr,
+                   time_left / 60.0))
 
-    return train_loss/(batch_idx+1), 100.*correct/total
+    return train_loss / (batch_idx + 1), 100. * correct / total
+
 
 @torch.no_grad()
 def test(net, testloader, criterion, mean_and_std):
@@ -42,7 +50,8 @@ def test(net, testloader, criterion, mean_and_std):
     mean, stddev = mean_and_std
 
     for batch_idx, (inputs, targets) in enumerate(testloader):
-        inputs, targets = inputs.cuda(non_blocking=True), targets.cuda(non_blocking=True)
+        inputs, targets = inputs.cuda(non_blocking=True), targets.cuda(
+            non_blocking=True)
         inputs = inputs.float().sub_(mean).div_(stddev)
         outputs = net(inputs)
         loss = criterion(outputs, targets)
@@ -52,4 +61,4 @@ def test(net, testloader, criterion, mean_and_std):
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
 
-    return test_loss/(batch_idx+1), 100.*correct/total
+    return test_loss / (batch_idx + 1), 100. * correct / total

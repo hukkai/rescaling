@@ -1,7 +1,9 @@
-import torch, numpy, torchvision
-import torchvision.transforms as transforms
+import numpy
+import torch
 import torch.utils.data as Data
-from PIL import Image
+import torchvision
+import torchvision.transforms as transforms
+
 
 def fast_collate(batch):
     imgs = [img[0] for img in batch]
@@ -16,19 +18,28 @@ def fast_collate(batch):
         tensor[i] = torch.from_numpy(nump_array)
     return tensor.contiguous(), targets
 
+
 def folder_loader(traindir, valdir, batch_size):
-    train_dataset = torchvision.datasets.ImageFolder(traindir,
+    train_dataset = torchvision.datasets.ImageFolder(
+        traindir,
         transforms.Compose([
             transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip()]))
-    train_loader = Data.DataLoader(train_dataset, batch_size=batch_size, 
-        num_workers=24, shuffle=True, drop_last=True, collate_fn=fast_collate)
+            transforms.RandomHorizontalFlip()
+        ]))
+    train_loader = Data.DataLoader(train_dataset,
+                                   batch_size=batch_size,
+                                   num_workers=24,
+                                   shuffle=True,
+                                   drop_last=True,
+                                   collate_fn=fast_collate)
 
-    val_dataset = torchvision.datasets.ImageFolder(valdir,
-        transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224)]))
-    val_loader = Data.DataLoader(val_dataset, batch_size=batch_size * 3, 
-        num_workers=24, collate_fn=fast_collate)
+    val_dataset = torchvision.datasets.ImageFolder(
+        valdir,
+        transforms.Compose(
+            [transforms.Resize(256),
+             transforms.CenterCrop(224)]))
+    val_loader = Data.DataLoader(val_dataset,
+                                 batch_size=batch_size * 3,
+                                 num_workers=24,
+                                 collate_fn=fast_collate)
     return train_loader, val_loader
-
